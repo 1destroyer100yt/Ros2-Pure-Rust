@@ -1,0 +1,6 @@
+# Only stable rustfmt options. Import grouping (std / external / crate, PLAN.md §0.5)
+# is a nightly-only rustfmt option, so it is a review rule rather than an automatic one.
+edition = "2024"
+max_width = 100
+use_field_init_shorthand = true
+use_try_shorthand = true

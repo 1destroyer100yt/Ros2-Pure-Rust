@@ -1,0 +1,11 @@
+[package]
+name = "prr-interfaces"
+description = "Pure-Rust ROS 2: standard ROS 2 message types."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

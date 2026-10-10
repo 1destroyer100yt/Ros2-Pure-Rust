@@ -1,0 +1,4 @@
+[book]
+title = "Pure-Rust ROS 2"
+language = "en"
+src = "src"

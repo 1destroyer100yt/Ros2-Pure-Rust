@@ -1,0 +1,17 @@
+[package]
+name = "prr-cli"
+description = "Pure-Rust ROS 2: the prr command-line tool."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "prr"
+path = "src/main.rs"
+# The library crate `prr` owns the `prr` docs page; the binary documents itself via --help.
+doc = false
+
+[lints]
+workspace = true
