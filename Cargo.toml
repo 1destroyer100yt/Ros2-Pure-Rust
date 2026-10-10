@@ -1,0 +1,41 @@
+# Workspace for the pure-Rust ROS 2 implementation.
+#
+# Shipped crates live in `crates/` and must pass the purity gate
+# (`cargo xtask purity`, see PLAN.md §0.2). Developer tooling lives in `xtask/`.
+
+[workspace]
+resolver = "3"
+members = ["crates/*", "xtask"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+repository = "https://github.com/1destroyer100yt/Ros2-Pure-Rust"
+# Nothing is published until the owner picks a license (PLAN.md §8).
+publish = false
+
+[workspace.lints.rust]
+missing_docs = "deny"
+# Crates opt out with a written justification in their crate docs (PLAN.md §0.3).
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Pedantic lints that fight the project style rather than catch problems:
+# `prr_dds::dds::DdsParticipant`-style names are fine, and `#[must_use]` on every
+# getter adds noise without catching real bugs.
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+# Every `unsafe` block explains why it is sound.
+undocumented_unsafe_blocks = "deny"
+# Stubs and debug leftovers never reach the main branch.
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+
+[workspace.lints.rustdoc]
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"

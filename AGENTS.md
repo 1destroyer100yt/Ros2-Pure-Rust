@@ -48,10 +48,12 @@ ROS 2 that is wire-compatible with stock ROS 2 nodes. The owner is Andrew Detroy
 - **Prove it.** Before saying something works, run it: `cargo fmt --check`,
   `cargo clippy --all-targets -- -D warnings`, `cargo test`,
   `RUSTDOCFLAGS="-D warnings" cargo doc --no-deps`. Report real results, including failures.
-- **Interop needs real ROS 2.** You probably can't run ROS 2 in your container. Interop
-  scenarios live in `tests/interop/` and run in GitHub Actions (`ros:jazzy` containers);
-  check their results with the GitHub check-run tools. Note in `PROGRESS.md` whether
-  Docker works locally.
+- **Interop needs real ROS 2.** Docker works in the cloud container once you start the
+  daemon (`dockerd > /tmp/dockerd.log 2>&1 &`), and the interop image from
+  `tests/interop/Dockerfile` runs stock ROS 2 with both Fast DDS and Cyclone DDS. Run the
+  scenarios in `tests/interop/` locally before pushing; CI runs them too. Details in
+  `docs/notes/environment.md`.
+- **Run everything with one command:** `cargo xtask ci` runs exactly what CI runs.
 - **Read before you write.** Before touching a crate, read its crate docs and the relevant
   `docs/notes/` file. Match existing patterns and naming.
 - **When stuck** after two honest attempts at the same problem, stop, write down what you

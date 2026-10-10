@@ -1,0 +1,32 @@
+# Interoperability against stock ROS 2 (PLAN.md §6). Each scenario in tests/interop/ runs
+# inside the image built from tests/interop/Dockerfile, once per DDS vendor.
+name: Interop
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke (${{ matrix.rmw }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        rmw: [rmw_fastrtps_cpp, rmw_cyclonedds_cpp]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the interop image
+        run: docker build -t prr-interop tests/interop
+      - name: Run the smoke scenario
+        run: >
+          docker run --rm
+          -e RMW_IMPLEMENTATION=${{ matrix.rmw }}
+          -v "$PWD/tests/interop:/interop:ro"
+          prr-interop /interop/smoke.sh

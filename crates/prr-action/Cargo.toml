@@ -1,0 +1,11 @@
+[package]
+name = "prr-action"
+description = "Pure-Rust ROS 2: ROS 2 actions."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

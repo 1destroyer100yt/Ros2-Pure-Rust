@@ -560,7 +560,7 @@ Plan around these from the start:
 
 | Limitation | Impact | Workaround in this plan |
 |---|---|---|
-| Probably no native ROS 2 install in the coding container; Docker may not have a running daemon; UDP multicast often doesn't work inside containers | Can't run interop tests locally | All interop tests run in GitHub Actions jobs using `ros:jazzy` containers; read results through the GitHub check-run tools. Locally, use loopback middleware and unicast with `ROS_STATIC_PEERS`. Try `docker run ros:jazzy` once per session and record whether it works in `PROGRESS.md`. |
+| No native ROS 2 install in the coding container; the Docker daemon is not running at start | Interop tests need setup | Start `dockerd` and use the image in `tests/interop/` (verified working, see `docs/notes/environment.md`). CI runs the same image. UDP multicast inside one container works; across hosts it may not, so tests stay on one machine or use `ROS_STATIC_PEERS`. |
 | Can't read the OMG spec PDFs if network access is restricted | Risk of guessing wire formats | Golden packets captured from real ROS 2 in CI are the ground truth; spec notes go in `docs/notes/`. Owner can drop spec PDFs into `docs/specs/` (don't commit them if their license forbids it). |
 | No real robots, sensors, GPUs, displays | Can't test hardware drivers, rviz, Gazebo | Out of scope for v1. rviz2 and Gazebo keep working against our nodes because they speak the same wire protocol. |
 | Cloud CI timing is noisy | Latency/throughput numbers meaningless | Benchmarks only produce relative numbers in CI; real benchmarking is an owner task on real hardware. |
