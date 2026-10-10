@@ -77,12 +77,86 @@ under `crates/` and fails if any dependency in the normal/build graph is `cc`, `
 
 ### 0.4 Session protocol
 
-1. Read `PLAN.md` (this file) and `PROGRESS.md`.
+1. Read `AGENTS.md`, `PLAN.md` (this file) and `PROGRESS.md`.
 2. Take the first unchecked task in the current phase. Don't skip ahead unless blocked;
    if blocked, write the blocker in `PROGRESS.md` and take the next independent task.
 3. Write the tests first (golden vectors / interop scenario), then the code.
-4. Update `PROGRESS.md`: what was done, what's next, open questions, anything learned.
-5. Commit with owner identity (§0.1), push, open a PR.
+4. Run the self-review checklist in §0.5 before committing.
+5. Update `PROGRESS.md`: what was done, what's next, open questions, anything learned.
+6. Commit with owner identity (§0.1), push, open a PR.
+
+### 0.5 Code that explains itself and looks good
+
+This codebase is meant to be read and learned from, not only run. Someone who knows
+Rust but has never seen DDS should be able to open any file and follow it.
+
+**Documentation**
+- Every crate starts with a `//!` doc block covering what the crate does, where it sits in
+  the stack (a small ASCII diagram is welcome), a short runnable example, and the spec
+  sections or upstream files it implements.
+- Every module starts with a `//!` paragraph saying what lives in it and why it's separate.
+- Every public item has a `///` doc comment. CI enforces `#![deny(missing_docs)]` and
+  `cargo doc` with `-D warnings` (no broken intra-doc links).
+- Public functions document `# Errors`, `# Panics` (ideally "never"), and `# Safety` for
+  anything `unsafe`. Doc examples are real doctests that compile and run.
+- Comments explain **why**, never restate **what**. `// increment i` is noise;
+  `// RTPS counts fragments from 1, not 0 (DDSI-RTPS 2.5 §8.3.7.3)` is useful.
+- Every protocol detail cites its source: a spec section, or an upstream file and commit for
+  ROS 2 conventions that are only defined by code (e.g.
+  `// matches rmw_fastrtps_shared_cpp/src/rmw_request.cpp @ <commit>`).
+- Wire formats get a byte-layout diagram above the encoder:
+  ```rust
+  /// ```text
+  ///  0               1               2               3
+  ///  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  /// +---------------+---------------+-------------------------------+
+  /// | submessageId  |     flags     |       octetsToNextHeader      |
+  /// +---------------+---------------+-------------------------------+
+  /// ```
+  ```
+- State machines (reliable writer/reader, actions, lifecycle) get a state diagram in their
+  module docs and a table of transitions.
+- Spec acronyms (GUID, SPDP, SEDP, CDR, QoS, ...) are defined in `docs/GLOSSARY.md` and
+  linked the first time they appear in each crate's docs.
+- Examples in `examples/` read like tutorials: numbered steps in comments, explaining what
+  each part does and what you should see when you run it.
+- A user guide (`docs/book/`, built with mdBook, which is pure Rust) grows with each phase:
+  getting started, concepts, how-tos, and "coming from rclcpp" side-by-side comparisons.
+
+**Code shape**
+- Clear names over short ones: `sequence_number`, not `sn`; `heartbeat_period`, not `hb_p`.
+  Spec names are kept when they are the vocabulary readers will search for (`GuidPrefix`,
+  `AckNack`), always with a doc comment.
+- Small functions doing one thing; files roughly under 600 lines; one concept per module.
+- Newtypes instead of bare integers for protocol values (`EntityId`, `SequenceNumber`,
+  `DomainId`), so the type tells the reader what the number means.
+- Make illegal states unrepresentable with enums and typestate instead of runtime checks
+  and comments.
+- No magic numbers: named constants with a doc comment and spec reference.
+- Errors are typed (`thiserror`-style enums per crate) and their messages say what happened,
+  why, and what to do about it.
+- `rustfmt.toml` checked in; imports grouped std / external / crate; no commented-out code;
+  no `TODO` without an issue or a `PROGRESS.md` entry.
+- Selected `clippy::pedantic` lints on in `[workspace.lints]` (Phase 0 decides the list).
+
+**Things users see should look good**
+- CLI output: aligned tables, colour when attached to a terminal (respect `NO_COLOR`),
+  `--json` on every listing command, and helpful errors with a hint line, e.g.
+  ```text
+  error: no publishers matched subscription on /scan
+    why:  subscriber wants RELIABLE, publisher offers BEST_EFFORT
+    fix:  use QoS profile `sensor_data`, or pass --qos-reliability best_effort
+  ```
+- Log output: readable default format with severity colours and node names, same env
+  vars as ROS 2 for customising it.
+- Panics carry context; library code never panics on bad network input.
+
+**Self-review checklist (before every commit)**
+- [ ] Could a newcomer understand each new public item from its docs alone?
+- [ ] Is every protocol constant or layout cited?
+- [ ] Any comment that restates the code? Delete it. Any non-obvious line without a "why"? Add one.
+- [ ] `cargo fmt`, `cargo clippy -D warnings`, `cargo test`, `cargo doc -D warnings`, purity gate all clean.
+- [ ] `PROGRESS.md` updated; commit authored by the owner with no attribution trailers.
 
 ---
 
@@ -176,7 +250,11 @@ Each phase lists tasks with acceptance criteria. Check them off in `PROGRESS.md`
 
 - [ ] Workspace skeleton, `rust-toolchain.toml`, `.gitignore`, empty crates compiling.
 - [ ] `xtask purity` (see §0.2) with a test proving it catches a `cc` dependency.
-- [ ] GitHub Actions: fmt, clippy, test, purity on Linux. Matrix with macOS/Windows later.
+- [ ] GitHub Actions: fmt, clippy, test, `cargo doc -D warnings`, purity on Linux. Matrix
+      with macOS/Windows later.
+- [ ] Code-quality baseline (§0.5): `rustfmt.toml`, `[workspace.lints]` with
+      `missing_docs = "deny"` and the chosen pedantic lints, `docs/GLOSSARY.md`,
+      `docs/book/` mdBook skeleton, crate-doc template used by every crate.
 - [ ] Interop CI job skeleton: a job running in `ros:jazzy` (container) that can run
       `ros2 topic list`. This becomes the interop harness.
 - [ ] `PROGRESS.md` created from the template in §9.
